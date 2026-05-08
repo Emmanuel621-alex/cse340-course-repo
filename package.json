@@ -1,0 +1,28 @@
+{
+  "name": "cse340-course-repo",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [
+    "console.log(\"Hello",
+    "Node.js!\");"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "console.log(\"Hello, Node.js!\");"
+  },
+  "license": "ISC",
+  "author": "emmanuel",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ejs": "^5.0.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
