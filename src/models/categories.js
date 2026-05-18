@@ -10,7 +10,7 @@ const getAllCategories = async () => {
     return result.rows;
 };
 
-// 1. Get single category by ID
+// Get single category by ID
 const getCategoryById = async (categoryId) => {
     const query = `
         SELECT category_id, name
@@ -22,7 +22,19 @@ const getCategoryById = async (categoryId) => {
     return result.rows[0];
 };
 
-// 2. Get categories for a project
+// Get category details
+const getCategoryDetails = async (categoryId) => {
+    const query = `
+        SELECT category_id, name
+        FROM public.categories
+        WHERE category_id = $1;
+    `;
+
+    const result = await db.query(query, [categoryId]);
+    return result.rows[0];
+};
+
+// Get categories for a project
 const getCategoriesByProjectId = async (projectId) => {
     const query = `
         SELECT
@@ -38,7 +50,7 @@ const getCategoriesByProjectId = async (projectId) => {
     return result.rows;
 };
 
-// 3. Get projects for a category
+// Get projects for a category
 const getProjectsByCategoryId = async (categoryId) => {
     const query = `
         SELECT
@@ -57,6 +69,31 @@ const getProjectsByCategoryId = async (categoryId) => {
 
     const result = await db.query(query, [categoryId]);
     return result.rows;
+};
+
+// Create new category
+const createCategory = async (name) => {
+    const query = `
+        INSERT INTO categories (name)
+        VALUES ($1)
+        RETURNING *;
+    `;
+
+    const result = await db.query(query, [name]);
+    return result.rows[0];
+};
+
+// Update category
+const updateCategory = async (categoryId, name) => {
+    const query = `
+        UPDATE categories
+        SET name = $1
+        WHERE category_id = $2
+        RETURNING *;
+    `;
+
+    const result = await db.query(query, [name, categoryId]);
+    return result.rows[0];
 };
 
 const assignCategoryToProject = async (projectId, categoryId) => {
@@ -84,7 +121,10 @@ const updateCategoryAssignments = async (projectId, categoryIds) => {
 export {
     getAllCategories,
     getCategoryById,
+    getCategoryDetails,
     getCategoriesByProjectId,
     getProjectsByCategoryId,
+    createCategory,
+    updateCategory,
     updateCategoryAssignments
 };
