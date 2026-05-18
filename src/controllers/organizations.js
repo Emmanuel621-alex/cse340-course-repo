@@ -1,11 +1,9 @@
 // Import any needed model functions
-import { getAllOrganizations, getOrganizationDetails } from '../models/organizations.js';
+import { getAllOrganizations, getOrganizationDetails, createOrganization, updateOrganization } from '../models/organizations.js';
 import { getProjectsByOrganizationId } from '../models/projects.js';
-import { createOrganization } from '../models/organizations.js';
 import { body, validationResult } from 'express-validator';
 
 // Define validation and sanitization rules for organization form
-// Define validation rules for organization form
 const organizationValidation = [
     body('name')
         .trim()
@@ -26,6 +24,7 @@ const organizationValidation = [
         .isEmail()
         .withMessage('Please provide a valid email address')
 ];
+
 // Define any controller functions
 const showOrganizationsPage = async (req, res) => {
     const organizations = await getAllOrganizations();
@@ -40,14 +39,44 @@ const showOrganizationDetailsPage = async (req, res) => {
     const projects = await getProjectsByOrganizationId(organizationId);
     const title = 'Organization Details';
 
-    res.render('organization', {title, organizationDetails, projects});
+    res.render('organization', { title, organizationDetails, projects });
 };
+
 const showNewOrganizationForm = async (req, res) => {
     const title = 'Add New Organization';
 
     res.render('new-organization', { title });
 };
+
+const showEditOrganizationForm = async (req, res) => {
+    const organizationId = req.params.id;
+    const organizationDetails = await getOrganizationDetails(organizationId);
+
+    const title = 'Edit Organization';
+    res.render('edit-organization', { title, organizationDetails });
+};
+
 const processNewOrganizationForm = async (req, res) => {
+    const results = validationResult(req);
+    if (!results.isEmpty()) {
+        results.array().forEach((error) => {
+            req.flash('error', error.msg);
+        });
+
+        return res.redirect('/new-organization');
+    }
+
+    const { name, description, contactEmail } = req.body;
+    const logoFilename = 'placeholder-logo.png';
+
+    const organizationId = await createOrganization(name, description, contactEmail, logoFilename);
+    req.flash('success', 'Organization added successfully!');
+    res.redirect(`/organization/${organizationId}`);
+};
+
+const processEditOrganizationForm = async (req, res) => {
+    const organizationId = req.params.id;
+
     // Check for validation errors
     const results = validationResult(req);
     if (!results.isEmpty()) {
@@ -56,22 +85,25 @@ const processNewOrganizationForm = async (req, res) => {
             req.flash('error', error.msg);
         });
 
-        // Redirect back to the new organization form
-        return res.redirect('/new-organization');
+        // Redirect back to the edit organization form
+        return res.redirect('/edit-organization/' + organizationId);
     }
 
-    const { name, description, contactEmail } = req.body;
-    const logoFilename = 'placeholder-logo.png'; // Use the placeholder logo for all new organizations    
+    const { name, description, contactEmail, logoFilename } = req.body;
 
-    const organizationId = await createOrganization(name, description, contactEmail, logoFilename);
-    req.flash('success', 'Organization added successfully!');
+    await updateOrganization(organizationId, name, description, contactEmail, logoFilename);
+
+    req.flash('success', 'Organization updated successfully!');
     res.redirect(`/organization/${organizationId}`);
 };
+
 // Export any controller functions
 export {
     showOrganizationsPage,
     showOrganizationDetailsPage,
     showNewOrganizationForm,
+    showEditOrganizationForm,
     processNewOrganizationForm,
-    organizationValidation
+    organizationValidation,
+    processEditOrganizationForm
 };
