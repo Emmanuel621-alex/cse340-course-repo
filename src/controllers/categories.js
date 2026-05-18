@@ -1,10 +1,14 @@
 import {
     getAllCategories,
     getCategoryById,
-    getProjectsByCategoryId
+    getProjectsByCategoryId,
+    getCategoriesByProjectId,
+    updateCategoryAssignments
 } from '../models/categories.js';
 
-// Main categories page (already correct)
+import { getProjectDetails } from '../models/projects.js';
+
+// Main categories page
 const showCategoriesPage = async (req, res) => {
     const categories = await getAllCategories();
     const title = 'Service Categories';
@@ -12,7 +16,7 @@ const showCategoriesPage = async (req, res) => {
     res.render('categories', { title, categories });
 };
 
-// NEW: Category details page
+// Category details page
 const showCategoryDetailsPage = async (req, res) => {
     const categoryId = req.params.id;
 
@@ -28,8 +32,42 @@ const showCategoryDetailsPage = async (req, res) => {
     });
 };
 
+const showAssignCategoriesForm = async (req, res) => {
+    const projectId = req.params.projectId;
+
+    const projectDetails = await getProjectDetails(projectId);
+    const categories = await getAllCategories();
+    const assignedCategories = await getCategoriesByProjectId(projectId);
+
+    const title = 'Assign Categories to Project';
+
+    res.render('assign-categories', {
+        title,
+        projectId,
+        projectDetails,
+        categories,
+        assignedCategories
+    });
+};
+
+const processAssignCategoriesForm = async (req, res) => {
+    const projectId = req.params.projectId;
+    const selectedCategoryIds = req.body.categories || [];
+
+    const categoryIdsArray = Array.isArray(selectedCategoryIds)
+        ? selectedCategoryIds
+        : [selectedCategoryIds];
+
+    await updateCategoryAssignments(projectId, categoryIdsArray);
+
+    req.flash('success', 'Categories updated successfully.');
+    res.redirect(`/project/${projectId}`);
+};
+
 // Export controller functions
 export {
     showCategoriesPage,
-    showCategoryDetailsPage
+    showCategoryDetailsPage,
+    showAssignCategoriesForm,
+    processAssignCategoriesForm
 };
