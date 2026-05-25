@@ -10,7 +10,6 @@ const getAllCategories = async () => {
     return result.rows;
 };
 
-// Get single category by ID
 const getCategoryById = async (categoryId) => {
     const query = `
         SELECT category_id, name
@@ -22,26 +21,13 @@ const getCategoryById = async (categoryId) => {
     return result.rows[0];
 };
 
-// Get category details
-const getCategoryDetails = async (categoryId) => {
-    const query = `
-        SELECT category_id, name
-        FROM public.categories
-        WHERE category_id = $1;
-    `;
-
-    const result = await db.query(query, [categoryId]);
-    return result.rows[0];
-};
-
-// Get categories for a project
 const getCategoriesByProjectId = async (projectId) => {
     const query = `
         SELECT
             c.category_id,
             c.name
-        FROM categories c
-        JOIN project_categories pc
+        FROM public.categories c
+        JOIN public.project_categories pc
             ON c.category_id = pc.category_id
         WHERE pc.project_id = $1;
     `;
@@ -50,7 +36,6 @@ const getCategoriesByProjectId = async (projectId) => {
     return result.rows;
 };
 
-// Get projects for a category
 const getProjectsByCategoryId = async (categoryId) => {
     const query = `
         SELECT
@@ -60,8 +45,8 @@ const getProjectsByCategoryId = async (categoryId) => {
             sp.location,
             sp.project_date,
             sp.organization_id
-        FROM service_projects sp
-        JOIN project_categories pc
+        FROM public.service_projects sp
+        JOIN public.project_categories pc
             ON sp.project_id = pc.project_id
         WHERE pc.category_id = $1
         ORDER BY sp.project_date;
@@ -71,34 +56,50 @@ const getProjectsByCategoryId = async (categoryId) => {
     return result.rows;
 };
 
-// Create new category
 const createCategory = async (name) => {
     const query = `
-        INSERT INTO categories (name)
+        INSERT INTO public.categories (name)
         VALUES ($1)
-        RETURNING *;
+        RETURNING category_id;
     `;
 
     const result = await db.query(query, [name]);
-    return result.rows[0];
+
+    if (result.rows.length === 0) {
+        throw new Error('Failed to create category');
+    }
+
+    if (process.env.ENABLE_SQL_LOGGING === 'true') {
+        console.log('Created category with ID:', result.rows[0].category_id);
+    }
+
+    return result.rows[0].category_id;
 };
 
-// Update category
 const updateCategory = async (categoryId, name) => {
     const query = `
-        UPDATE categories
+        UPDATE public.categories
         SET name = $1
         WHERE category_id = $2
-        RETURNING *;
+        RETURNING category_id;
     `;
 
     const result = await db.query(query, [name, categoryId]);
-    return result.rows[0];
+
+    if (result.rows.length === 0) {
+        throw new Error('Category not found');
+    }
+
+    if (process.env.ENABLE_SQL_LOGGING === 'true') {
+        console.log('Updated category with ID:', categoryId);
+    }
+
+    return result.rows[0].category_id;
 };
 
 const assignCategoryToProject = async (projectId, categoryId) => {
     const query = `
-        INSERT INTO project_categories (project_id, category_id)
+        INSERT INTO public.project_categories (project_id, category_id)
         VALUES ($1, $2);
     `;
 
@@ -107,11 +108,15 @@ const assignCategoryToProject = async (projectId, categoryId) => {
 
 const updateCategoryAssignments = async (projectId, categoryIds) => {
     const deleteQuery = `
-        DELETE FROM project_categories
+        DELETE FROM public.project_categories
         WHERE project_id = $1;
     `;
 
     await db.query(deleteQuery, [projectId]);
+
+    if (!categoryIds || categoryIds.length === 0) {
+        return;
+    }
 
     for (const categoryId of categoryIds) {
         await assignCategoryToProject(projectId, categoryId);
@@ -121,10 +126,10 @@ const updateCategoryAssignments = async (projectId, categoryIds) => {
 export {
     getAllCategories,
     getCategoryById,
-    getCategoryDetails,
     getCategoriesByProjectId,
     getProjectsByCategoryId,
     createCategory,
     updateCategory,
+    assignCategoryToProject,
     updateCategoryAssignments
 };

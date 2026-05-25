@@ -45,7 +45,7 @@
                 type="date"
                 id="date"
                 name="date"
-                value="<%= project.date ? project.date.toISOString().split('T')[0] : '' %>"
+                value="<%= project.project_date ? project.project_date.toISOString().split('T')[0] : '' %>"
                 required
             />
         </div>
@@ -58,15 +58,15 @@
                         value="<%= org.organization_id %>"
                         <%= org.organization_id === project.organization_id ? 'selected' : '' %>
                     >
-                        <%= org.organization_name %>
+                        <%= org.name %>
                     </option>
                 <% }) %>
             </select>
         </div>
 
         <button type="submit">Update Project</button>
-    </form>
 
+    </form>
 </main>
 
 <%- include('partials/footer') %>

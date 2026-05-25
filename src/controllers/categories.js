@@ -7,7 +7,6 @@ import {
     getCategoriesByProjectId,
     updateCategoryAssignments,
     createCategory,
-    getCategoryDetails,
     updateCategory
 } from '../models/categories.js';
 
@@ -34,16 +33,27 @@ const showCategoriesPage = async (req, res) => {
 const showCategoryDetailsPage = async (req, res) => {
     const categoryId = req.params.id;
 
-    const category = await getCategoryById(categoryId);
-    const projects = await getProjectsByCategoryId(categoryId);
+    try {
+        const category = await getCategoryById(categoryId);
 
-    const title = 'Category Details';
+        if (!category) {
+            req.flash('error', 'Category not found.');
+            return res.redirect('/categories');
+        }
 
-    res.render('category', {
-        title,
-        category,
-        projects
-    });
+        const projects = await getProjectsByCategoryId(categoryId);
+        const title = 'Category Details';
+
+        res.render('category', {
+            title,
+            category,
+            projects
+        });
+    } catch (error) {
+        console.error('Error loading category details:', error);
+        req.flash('error', 'Unable to load category details.');
+        res.redirect('/categories');
+    }
 };
 
 // Show new category form
@@ -58,7 +68,7 @@ const processNewCategoryForm = async (req, res) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-        errors.array().forEach(error => {
+        errors.array().forEach((error) => {
             req.flash('error', error.msg);
         });
 
@@ -74,7 +84,6 @@ const processNewCategoryForm = async (req, res) => {
         res.redirect('/categories');
     } catch (error) {
         console.error('Error creating category:', error);
-
         req.flash('error', 'There was an error creating the category.');
         res.redirect('/new-category');
     }
@@ -85,7 +94,12 @@ const showEditCategoryForm = async (req, res) => {
     const categoryId = req.params.id;
 
     try {
-        const category = await getCategoryDetails(categoryId);
+        const category = await getCategoryById(categoryId);
+
+        if (!category) {
+            req.flash('error', 'Category not found.');
+            return res.redirect('/categories');
+        }
 
         const title = 'Edit Category';
 
@@ -95,7 +109,6 @@ const showEditCategoryForm = async (req, res) => {
         });
     } catch (error) {
         console.error('Error loading edit category form:', error);
-
         req.flash('error', 'Unable to load category.');
         res.redirect('/categories');
     }
@@ -108,7 +121,7 @@ const processEditCategoryForm = async (req, res) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-        errors.array().forEach(error => {
+        errors.array().forEach((error) => {
             req.flash('error', error.msg);
         });
 
@@ -124,7 +137,6 @@ const processEditCategoryForm = async (req, res) => {
         res.redirect(`/category/${categoryId}`);
     } catch (error) {
         console.error('Error updating category:', error);
-
         req.flash('error', 'There was an error updating the category.');
         res.redirect(`/edit-category/${categoryId}`);
     }
@@ -133,19 +145,30 @@ const processEditCategoryForm = async (req, res) => {
 const showAssignCategoriesForm = async (req, res) => {
     const projectId = req.params.projectId;
 
-    const projectDetails = await getProjectDetails(projectId);
-    const categories = await getAllCategories();
-    const assignedCategories = await getCategoriesByProjectId(projectId);
+    try {
+        const projectDetails = await getProjectDetails(projectId);
+        const categories = await getAllCategories();
+        const assignedCategories = await getCategoriesByProjectId(projectId);
 
-    const title = 'Assign Categories to Project';
+        if (!projectDetails) {
+            req.flash('error', 'Project not found.');
+            return res.redirect('/projects');
+        }
 
-    res.render('assign-categories', {
-        title,
-        projectId,
-        projectDetails,
-        categories,
-        assignedCategories
-    });
+        const title = 'Assign Categories to Project';
+
+        res.render('assign-categories', {
+            title,
+            projectId,
+            projectDetails,
+            categories,
+            assignedCategories
+        });
+    } catch (error) {
+        console.error('Error loading assign categories form:', error);
+        req.flash('error', 'Unable to load the assign categories form.');
+        res.redirect('/projects');
+    }
 };
 
 const processAssignCategoriesForm = async (req, res) => {
@@ -156,10 +179,16 @@ const processAssignCategoriesForm = async (req, res) => {
         ? selectedCategoryIds
         : [selectedCategoryIds];
 
-    await updateCategoryAssignments(projectId, categoryIdsArray);
+    try {
+        await updateCategoryAssignments(projectId, categoryIdsArray);
 
-    req.flash('success', 'Categories updated successfully.');
-    res.redirect(`/project/${projectId}`);
+        req.flash('success', 'Categories updated successfully.');
+        res.redirect(`/project/${projectId}`);
+    } catch (error) {
+        console.error('Error updating category assignments:', error);
+        req.flash('error', 'There was an error updating the categories.');
+        res.redirect(`/project/${projectId}/assign-categories`);
+    }
 };
 
 // Export controller functions
