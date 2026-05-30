@@ -1,5 +1,10 @@
 import express from 'express';
 
+import {
+    showUserRegistrationForm,
+    processUserRegistrationForm
+} from './controllers/users.js';
+
 import { showHomePage } from './controllers/index.js';
 
 import {
@@ -40,7 +45,9 @@ import { testErrorPage } from './controllers/errors.js';
 const router = express.Router();
 
 router.get('/', showHomePage);
-
+// User registration routes
+router.get('/register', showUserRegistrationForm);
+router.post('/register', processUserRegistrationForm);
 // Organization routes
 router.get('/organizations', showOrganizationsPage);
 router.get('/organization/:id', showOrganizationDetailsPage);
