@@ -4,18 +4,28 @@ import bcrypt from 'bcrypt';
 const createUser = async (name, email, passwordHash) => {
     const defaultRole = 'user';
 
+    const roleQuery = `
+        SELECT role_id
+        FROM roles
+        WHERE role_name = $1
+        LIMIT 1;
+    `;
+
+    const roleResult = await db.query(roleQuery, [defaultRole]);
+
+    if (roleResult.rows.length === 0) {
+        throw new Error(`Role "${defaultRole}" not found`);
+    }
+
+    const roleId = roleResult.rows[0].role_id;
+
     const query = `
         INSERT INTO users (name, email, password_hash, role_id)
-        VALUES (
-            $1,
-            $2,
-            $3,
-            (SELECT role_id FROM roles WHERE role_name = $4)
-        )
+        VALUES ($1, $2, $3, $4)
         RETURNING user_id;
     `;
 
-    const queryParams = [name, email, passwordHash, defaultRole];
+    const queryParams = [name, email, passwordHash, roleId];
 
     const result = await db.query(query, queryParams);
 
@@ -32,13 +42,19 @@ const createUser = async (name, email, passwordHash) => {
 
 const findUserByEmail = async (email) => {
     const query = `
-        SELECT user_id, name, email, password_hash, role_id
-        FROM users
-        WHERE email = $1;
+        SELECT
+            u.user_id,
+            u.name,
+            u.email,
+            u.password_hash,
+            r.role_name
+        FROM users u
+        LEFT JOIN roles r
+            ON u.role_id = r.role_id
+        WHERE u.email = $1;
     `;
 
-    const queryParams = [email];
-    const result = await db.query(query, queryParams);
+    const result = await db.query(query, [email]);
 
     if (result.rows.length === 0) {
         return null;

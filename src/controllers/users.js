@@ -41,7 +41,7 @@ const processLoginForm = async (req, res) => {
                 console.log('User logged in:', user);
             }
 
-           return res.redirect('/dashboard');
+            return res.redirect('/dashboard');
         }
 
         req.flash('error', 'Invalid email or password.');
@@ -64,6 +64,7 @@ const processLogout = (req, res) => {
         res.redirect('/login');
     });
 };
+
 const requireLogin = (req, res, next) => {
     if (!req.session.user) {
         req.flash('error', 'You must be logged in to access that page.');
@@ -71,6 +72,26 @@ const requireLogin = (req, res, next) => {
     }
 
     next();
+};
+
+/**
+ * Middleware factory to require a specific role
+ * @param {string} role
+ */
+const requireRole = (role) => {
+    return (req, res, next) => {
+        if (!req.session || !req.session.user) {
+            req.flash('error', 'You must be logged in to access that page.');
+            return res.redirect('/login');
+        }
+
+        if (req.session.user.role_name !== role) {
+            req.flash('error', 'You do not have permission to access that page.');
+            return res.redirect('/');
+        }
+
+        next();
+    };
 };
 
 const showDashboard = (req, res) => {
@@ -82,6 +103,7 @@ const showDashboard = (req, res) => {
         email: user.email
     });
 };
+
 export {
     showUserRegistrationForm,
     processUserRegistrationForm,
@@ -89,5 +111,6 @@ export {
     processLoginForm,
     showDashboard,
     processLogout,
-    requireLogin
+    requireLogin,
+    requireRole
 };

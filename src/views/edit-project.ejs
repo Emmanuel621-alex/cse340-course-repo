@@ -2,7 +2,9 @@
 
 <main>
     <h1><%= title %></h1>
-
+    <% if (user && user.role_name === 'admin') { %>
+    <a href="/edit-project/<%= project.project_id %>">Edit Project</a>
+<% } %>
     <form action="/edit-project/<%= project.project_id %>" method="POST">
 
         <div class="form-group">

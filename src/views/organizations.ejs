@@ -4,19 +4,22 @@
     <h1><%= title %></h1>
 
     <p>Here are a few of our partner organizations:</p>
-
+   <% if (user && user.role_name === 'admin') { %>
+    <a href="/new-organization">Add New Organization</a>
+<% } %>
     <ul>
         <% organizations.forEach(organization => { %>
             <li>
-                <img src="/images/<%= organization.logo_filename %>" 
-                     alt="<%= organization.name %> logo">
+                <img
+                    src="/images/<%= organization.logo_filename %>"
+                    alt="<%= organization.name %> logo"
+                >
 
                 <a href="/organization/<%= organization.organization_id %>">
                     <%= organization.name %>
                 </a>
-                <p><a href="/new-organization">Add a new organization</a></p>
-                
-                : <%= organization.contact_email %>
+
+                <p><%= organization.contact_email %></p>
             </li>
         <% }); %>
     </ul>

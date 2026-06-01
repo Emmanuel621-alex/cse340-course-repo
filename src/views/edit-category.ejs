@@ -2,7 +2,9 @@
 
 <main>
     <h1><%= title %></h1>
-
+    <% if (user && user.role_name === 'admin') { %>
+    <a href="/edit-category/<%= category.category_id %>">Edit Category</a>
+    <% } %>
     <form action="/edit-category/<%= category.category_id %>" method="POST">
 
         <div class="form-group">

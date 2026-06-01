@@ -2,11 +2,9 @@
 
 <main>
     <h1><%= title %></h1>
-
-    <p>
+    <% if (user && user.role_name === 'admin') { %>
         <a href="/new-category">Add New Category</a>
-    </p>
-
+<% } %>
     <ul>
         <% categories.forEach(category => { %>
             <li>

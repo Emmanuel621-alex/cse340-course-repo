@@ -1,6 +1,9 @@
 <%- include('partials/header') %>
 <main>
     <h1><%= title %></h1>
+    <% if (user && user.role_name === 'admin') { %>
+    <a href="/new-organization">Add New Organization</a>
+<% } %>
 
  <form action="/new-organization" method="POST">
     <div class="form-group">
