@@ -8,7 +8,8 @@ import {
     processLogout,
     requireLogin,
     requireRole,
-    showDashboard
+    showDashboard,
+    showUsersPage
 } from './controllers/users.js';
 
 import { showHomePage } from './controllers/index.js';
@@ -63,6 +64,9 @@ router.get('/logout', processLogout);
 
 // Protected dashboard route
 router.get('/dashboard', requireLogin, showDashboard);
+
+// Users page
+router.get('/users',requireRole('admin'),showUsersPage);
 
 // Organization routes
 router.get('/organizations', showOrganizationsPage);
