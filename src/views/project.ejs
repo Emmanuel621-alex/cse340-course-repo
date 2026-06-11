@@ -2,6 +2,7 @@
 
 <main>
     <h1><%= title %></h1>
+
     <% if (user && user.role_name === 'admin') { %>
         <a href="/new-project">Add New Project</a>
     <% } %>
@@ -24,6 +25,33 @@
             <%= project.organization_name %>
         </a>
     </p>
+
+    <!-- Volunteer Section -->
+    <% if (user) { %>
+
+        <% if (!volunteerStatus) { %>
+
+            <form action="/project/<%= project.project_id %>/volunteer" method="POST">
+                <button type="submit">
+                    Volunteer For This Project
+                </button>
+            </form>
+
+        <% } else { %>
+
+            <p>
+                <strong>You are volunteering for this project.</strong>
+            </p>
+
+            <form action="/project/<%= project.project_id %>/remove-volunteer" method="POST">
+                <button type="submit">
+                    Remove Volunteer Signup
+                </button>
+            </form>
+
+        <% } %>
+
+    <% } %>
 
     <p>
         <a href="/edit-project/<%= project.project_id %>">
